@@ -1,0 +1,19 @@
+wrap {
+    text-align: center;
+    margin: 15px auto;
+}
+
+.resp-w30 {
+    display: inline-block;
+    text-align: center;
+    width: 30%;
+    margin-right: 1%;
+    border: black 1px dashed;
+}
+
+.resp-w45 {
+    display: inline-block;
+    text-align: left;
+    width: 48%;
+    margin-right: 1%;
+}
