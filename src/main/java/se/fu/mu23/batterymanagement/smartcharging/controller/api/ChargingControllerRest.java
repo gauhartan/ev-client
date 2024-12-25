@@ -7,59 +7,59 @@ import se.fu.mu23.batterymanagement.smartcharging.model.request.ChargingRequest;
 import se.fu.mu23.batterymanagement.smartcharging.model.request.DischargingRequest;
 import se.fu.mu23.batterymanagement.smartcharging.model.response.BatteryInfoResponse;
 import se.fu.mu23.batterymanagement.smartcharging.model.response.NumberArrayResponse;
-import se.fu.mu23.batterymanagement.smartcharging.util.ChargingUtil;
+import se.fu.mu23.batterymanagement.smartcharging.service.ChargingService;
 
 @RestController
 @RequestMapping("api")
 @Slf4j
 public class ChargingControllerRest {
 
+    private final ChargingService chargingService;
+
+    public ChargingControllerRest(ChargingService chargingService) {
+        this.chargingService = chargingService;
+    }
+
 
     @GetMapping("/battery/info")
     public ResponseEntity<BatteryInfoResponse> getBatteryInfo() {
-        log.info("Battery info request received");
-        var info = ChargingUtil.getBatteryInfo();
+        log.debug("Battery info request received");
+        var info = chargingService.getInfo();
         return ResponseEntity.ok(info);
     }
 
     @GetMapping("/price/rate")
     public ResponseEntity<NumberArrayResponse> getPriceRate() {
-        log.info("Price rates request received");
-        var priceRate = ChargingUtil.getPriceRate();
+        log.debug("Price rates request received");
+        var priceRate = chargingService.getPriceRate();
         return ResponseEntity.ok(priceRate);
     }
 
     @GetMapping("/households/energy/consumption")
     public ResponseEntity<NumberArrayResponse> getHouseholdsEnergyConsumption() {
-        log.info("households energy consumption request received");
-        var energyConsumption = ChargingUtil.getHouseholdsEnergyConsumption();
+        log.debug("households energy consumption request received");
+        var energyConsumption = chargingService.getHouseholdsEnergyConsumption();
         return ResponseEntity.ok(energyConsumption);
     }
 
     @PostMapping("/charge")
     public ResponseEntity<ChargingRequest> setCharging(@RequestBody ChargingRequest request) {
-        log.info("Charge on/off request received");
-        var charging = ChargingUtil.setCharging(request);
+        log.debug("Charge on/off request received");
+        var charging = chargingService.setCharging(request);
         return ResponseEntity.ok(charging);
     }
 
     @PostMapping("/discharge")
     public ResponseEntity<DischargingRequest> setDischarging(@RequestBody DischargingRequest request) {
-        log.info("Discharge (reset) request received");
-        var discharging = ChargingUtil.setDischarging(request);
+        log.debug("Discharge (reset) request received");
+        var discharging = chargingService.setDischarging(request);
         return ResponseEntity.ok(discharging);
     }
 
     @GetMapping("/charge/recommendation/hours")
     public ResponseEntity getRecommendedChargingDayHours() {
-        log.info("Recommended charging hours request received");
-        var recommendedChargingDayHours = ChargingUtil.getRecommendedChargingDayHours();
+        log.debug("Recommended charging hours request received");
+        var recommendedChargingDayHours = chargingService.getRecommendedChargingHourByPrice();
         return ResponseEntity.ok(recommendedChargingDayHours);
-    }
-
-    @PostMapping("/smartcharging")
-    public void smartCharging() {
-        log.info("Smart charging request received");
-        ChargingUtil.smartCharging();
     }
 }

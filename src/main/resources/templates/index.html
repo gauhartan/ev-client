@@ -2,14 +2,10 @@
 <html lang="en">
 <head>
     <title>Smart Charging</title>
-    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" rel="stylesheet">
-    <script crossorigin="anonymous"
-            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link href="/ev-station-fill.svg" rel="icon" sizes="any" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="../static/style.css" rel="stylesheet" th:href="@{/style.css}"/>
+    <link href="/style.css" rel="stylesheet"/>
 </head>
 <body>
 <div class="container">
@@ -20,39 +16,83 @@
             <a class="btn btn-primary btn-sm mb-3" th:href="@{/discharge/on}">Discharge (reset)
                 <i class="bi bi-arrow-clockwise"></i></a>
             </button>
+            <br/>
+            <a class="btn btn-info btn-sm mb-3" th:href="@{/mode/price}">Switch to price mode
+                <i class="bi bi-coin"></i></a>
+            </button>
+            <a class="btn btn-info btn-sm mb-3" th:href="@{/mode/load}">Switch to load mode
+                <i class="bi bi-receipt-cutoff"></i></i></a>
+            </button>
+            <br/>
+            <a class="btn btn-danger btn-sm mb-3" th:href="@{/unplug}">Unplug (soft)
+                <i class="bi bi-x-circle"></i></a>
+            </button>
+            <a class="btn btn-success btn-sm mb-3" th:href="@{/plugin}">Plug in (soft)
+                <i class="bi bi-plug"></i></a>
+            </button>
             <div id="dv-info" th:fragment="battery-info">
                 <table>
                     <tr>
                         <td><i class="bi bi-watch"></i> Time:</td>
-                        <td th:text="${#numbers.formatInteger(info.simTimeHour(), 2)} + ':' + ${#numbers.formatInteger(info.simTimeMin(),2)}"></td>
+                        <td id="tdTime"
+                            th:text="${#numbers.formatInteger(info.simTimeHour(), 2)} + ':' + ${#numbers.formatInteger(info.simTimeMin(),2)}"></td>
                     </tr>
                     <tr>
-                        <td><i class="bi bi-plug"></i> Current energy <br/> consumption:</td>
-                        <td th:text="${info.baseCurrentLoad()} + ' KWh'"></td>
+                        <td><i class="bi bi-house-check"></i> Current energy consumption:</td>
+                        <td id="tdBaseCurrentLoad" th:text="${info.baseCurrentLoad()} + ' KWh'"></td>
                     </tr>
                     <tr>
                         <td><i class="bi bi-ev-front"></i> Batter SoC:</td>
-                        <td th:text="${info.batteryCapacityKWh()} + ' KWh'"></td>
+                        <td id="tdBatteryCapacityKWh"><span id="batteryLevelKwh"
+                                                            th:text="${info.batteryCapacityKWh()}"></span> KWh
+                        </td>
                     </tr>
                     <tr>
                         <td><i class="bi bi-ev-front"></i> Batter SoC level:</td>
                         <td>
-                            <span th:text="${#numbers.formatDecimal(info.batteryCapacityKWh()/ 46.3 * 100, 1,2)} + '%'"></span>
-                            <span>
-<!--                            <div aria-label="Success example" aria-valuemax="100" aria-valuemin="0" aria-valuenow="25"-->
-                                <!--                                 class="progress"-->
-                                <!--                                 id="pbSocLevel" role="progressbar">-->
-                                <!--                            <div class="progress-bar bg-success" id="pbSocLevel2" style="width: 25%">25%</div>-->
-                                <!--                            </div>-->
-                        </span>
+                            <!--                            <span th:text="${btlvlprcnt} + '%'" th:width="${btlvlprcnt} + '%'"-->
+                            <!--                                  th:with="btlvlprcnt=${#numbers.formatDecimal(info.batteryCapacityKWh()/ 46.3 * 100, 1,2)}"></span>-->
+                            <!--                            <span>-->
+                            <div id="batteryLevelFull">
+                                <div id="batteryLevelPercentage"/>
+                            </div>
+                            <!--                            <div aria-label="Success example" aria-valuemax="100" aria-valuemin="0" aria-valuenow="25"-->
+                            <!--                                 class="progress"-->
+                            <!--                                 id="pbSocLevel" role="progressbar">-->
+                            <!--                            <div class="progress-bar bg-success" id="pbSocLevel2" style="width: 25%">25%</div>-->
+                            <!--                            </div>-->
+                            </span>
                         </td>
                     </tr>
                     <tr>
-                        <td><i class="bi bi-ev-station"></i> Charging status:</td>
+                        <td><i class="bi bi-plug"></i> Plug (charger) status:</td>
                         <td>
                             <span>
-                            <i th:class="${info.evBatteryChargeStartStop()? 'bi bi-battery-charging': 'bi bi-x-circle'}"></i></span>
-                            <span th:class="${info.evBatteryChargeStartStop()? 'mb-2 bg-success': 'mb-2 bg-danger'}"
+                            <i id="iChargerStatus"
+                               th:class="${chargerStatus}? 'bi bi-plug': 'bi bi-x-circle'"></i></span>
+                            <span id="spChargerStatus"
+                                  th:class="${chargerStatus}? 'rounderCorner mb-2 bg-success': 'rounderCorner mb-2 bg-danger'"
+                                  th:text="${chargerStatus}? 'Plugged in': 'Unplugged'"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="bi bi-toggles2"></i> Charging mode:</td>
+                        <td>
+                            <span>
+                            <i id="iChargingMode"
+                               th:class="${#strings.equals(chargingMode, 'price')? 'bi bi-coin': 'bi bi-receipt-cutoff'}"></i></span>
+                            <span id="spChargingMode"
+                                  th:text="${#strings.equals(chargingMode, 'price')? 'Price optimized': 'Consumption optmized'}"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="bi bi-ev-station"></i> Is charging now:</td>
+                        <td>
+                            <span>
+                            <i id="iIsCharging"
+                               th:class="${info.evBatteryChargeStartStop()? 'bi bi-battery-charging': 'bi bi-battery'}"></i></span>
+                            <span id="spIsCharging"
+                                  th:class="${info.evBatteryChargeStartStop()? 'rounderCorner mb-2 bg-success': 'rounderCorner mb-2 bg-danger'}"
                                   th:text="${info.evBatteryChargeStartStop()? 'YES': 'NO'}"></span>
                         </td>
                     </tr>
@@ -64,10 +104,10 @@
     </div>
     <hr/>
     <div>
-        <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
+        <div class="row g-4 py-5 row-cols-1 row-cols-lg-4">
             <div class="feature col">
                 <div class="feature-icon d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-2 mb-3">
-                    <i class="bi bi-receipt-cutoff"></i>
+                    <i class="bi bi-coin"></i>
                 </div>
                 <h3 class="fs-2 text-body-emphasis">Energy price (KWh) per hour</h3>
                 <table class="table table-striped">
@@ -86,7 +126,7 @@
             </div>
             <div class="feature col">
                 <div class="feature-icon d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-2 mb-3">
-                    <i class="bi bi-cash-coin"></i>
+                    <i class="bi bi-receipt-cutoff"></i>
                 </div>
                 <h3 class="fs-2 text-body-emphasis">Households Energy consumption per hour</h3>
                 <div id="b1">
@@ -97,7 +137,7 @@
                             <th>KWh</th>
                         </thead>
                         <tbody>
-                        <tr th:each="ec, iter : ${energyconsumption.values()}">
+                        <tr th:each="ec, iter : ${energyConsumption.values()}">
                             <td th:text="${#numbers.formatInteger(iter.index, 2)}"></td>
                             <td th:text="${ec}"></td>
                         </tr>
@@ -107,10 +147,10 @@
             </div>
             <div class="feature col">
                 <div class="feature-icon d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-2 mb-3">
-                    <span><i class="bi bi-cash-coin"></i></span> &nbsp;&nbsp;&nbsp; <span><i
-                        class="bi bi-receipt-cutoff"></i></span>
+                    <span><i class="bi bi-check2-circle"></i></span> &nbsp;&nbsp;&nbsp;
+                    <span><i class="bi bi-coin"></i></span>
                 </div>
-                <h3 class="fs-2 text-body-emphasis">Recommended hours to charge the EV</h3>
+                <h3 class="fs-2 text-body-emphasis">Recommended hours by price to charge the EV</h3>
                 <table class="table table-striped">
                     <thead>
                     <tr>
@@ -118,9 +158,33 @@
                         <th>Price</th>
                     </thead>
                     <tbody>
-                    <tr th:each="recommendation : ${recommendations}">
-                        <td th:text="${#numbers.formatInteger(recommendation.hour(), 2)}"></td>
-                        <td th:text="${recommendation.price()}"></td>
+                    <tr th:each="recommendationByPrice : ${recommendationsByPrice}">
+                        <td th:id="'td1RecommendationByPrice' + ${recommendationByPrice.hour()}"
+                            th:text="${#numbers.formatInteger(recommendationByPrice.hour(), 2)}"></td>
+                        <td th:id="'td2RecommendationByPrice' + ${recommendationByPrice.hour()}"
+                            th:text="${recommendationByPrice.price()}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="feature col">
+                <div class="feature-icon d-inline-flex align-items-center justify-content-center text-bg-primary bg-gradient fs-2 mb-3">
+                    <span><i class="bi bi-check2-circle"></i></span> &nbsp;&nbsp;&nbsp;
+                    <span><i class="bi bi-receipt-cutoff"></i></span>
+                </div>
+                <h3 class="fs-2 text-body-emphasis">Recommended hours by load to charge the EV</h3>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Hour</th>
+                        <th>Price</th>
+                    </thead>
+                    <tbody>
+                    <tr th:each="recommendationByLoad : ${recommendationsByLoad}">
+                        <td th:id="'td1RecommendationByLoad' + ${recommendationByLoad.hour()}"
+                            th:text="${#numbers.formatInteger(recommendationByLoad.hour(), 2)}"></td>
+                        <td th:id="'td2RecommendationByLoad' + ${recommendationByLoad.hour()}"
+                            th:text="${recommendationByLoad.load()}"></td>
                     </tr>
                     </tbody>
                 </table>
@@ -128,42 +192,123 @@
         </div>
     </div>
 </div>
+<script src="/vanilla.js"></script>
 <script>
-    $(document).ready(function () {
-        var soccLevel = '${#numbers.formatDecimal(info.batteryCapacityKWh()/ 46.3 * 100, 1,2)}';
-        $("#pbSocLevel")
-            .attr("aria-valuenow", 93);
-        $("#pbSocLevel2")
-            .css("width", 93 + "%")
-            .text(93 + "% Complete");
-
-    });
-
-    // const getData = () => {
-    //
-    //     var interval = setInterval(function () {
-    //         fetch('battery/info').then(function (response) {
-    //             return response.text();
-    //         }).then(function (html) {
-    //             document.getElementById("dv-info").innerHTML = html;
-    //         }).catch(function (err) {
-    //             console.warn('Something went wrong while fetching battery-info.', err);
-    //         });
-    //     }, 1000);
-    // }
-
-    $(document).ready(function () {
-
-        var interval = setInterval(function () {
-            fetch('battery/info').then(function (response) {
-                return response.text();
-            }).then(function (html) {
-                document.getElementById("dv-info").innerHTML = html;
-            }).catch(function (err) {
-                console.warn('Something went wrong while fetching battery-info.', err);
-            });
+    window.addEventListener('load', function (event) {
+        var counter = 0;
+        var updateEverySecond = setInterval(function () {
+            counter++;
+            if (counter == 100) clearInterval(updateEverySecond);
+            var request = new XMLHttpRequest();
+            request.open("GET", "battery/update", true);
+            request.onreadystatechange = function () {
+                if (request.readyState != 4 || request.status != 200) return;
+                handleUpdateResponse(JSON.parse(request.responseText))
+            };
+            request.send();
         }, 1000);
+
     });
+
+    function handleUpdateResponse(jsonObj) {
+        document.getElementById("tdTime").innerText = formatInt2digit(jsonObj.info.sim_time_hour) + ":" + formatInt2digit(jsonObj.info.sim_time_min);
+        document.getElementById("tdBaseCurrentLoad").innerText = jsonObj.info.base_current_load;
+        document.getElementById("tdBatteryCapacityKWh").innerText = jsonObj.info.battery_capacity_kWh + " KWh";
+        showBatteryChargeLevelPercentage(jsonObj.info.battery_capacity_kWh);
+        if (jsonObj.chargerStatus) {
+            document.getElementById("iChargerStatus").classList.remove('bi-x-circle');
+            document.getElementById("iChargerStatus").classList.add('bi-plug');
+            document.getElementById("spChargerStatus").classList.remove('bg-danger');
+            document.getElementById("spChargerStatus").classList.add('bg-success');
+            document.getElementById("spChargerStatus").classList.add('rounderCorner');
+            document.getElementById("spChargerStatus").innerText = 'Plugged in';
+        } else {
+            document.getElementById("iChargerStatus").classList.remove('bi-plug');
+            document.getElementById("iChargerStatus").classList.add('bi-x-circle');
+            document.getElementById("spChargerStatus").classList.remove('bg-success');
+            document.getElementById("spChargerStatus").classList.add('bg-danger');
+            document.getElementById("spChargerStatus").classList.add('rounderCorner');
+            document.getElementById("spChargerStatus").innerText = 'Unplugged';
+        }
+
+        if (jsonObj.chargingMode == 'price') {
+            document.getElementById("iChargingMode").classList.remove('bi-receipt-cutoff');
+            document.getElementById("iChargingMode").classList.add('bi-coin');
+            document.getElementById("spChargingMode").innerText = 'Price optimized';
+        } else {
+            document.getElementById("iChargingMode").classList.remove('bi-coin');
+            document.getElementById("iChargingMode").classList.add('bi-receipt-cutoff');
+            document.getElementById("spChargingMode").innerText = 'Consumption optmized';
+        }
+
+        if (jsonObj.info.ev_battery_charge_start_stop) {
+            document.getElementById("iIsCharging").classList.remove('bi-battery');
+            document.getElementById("iIsCharging").classList.add('bi-battery-charging');
+            document.getElementById("spIsCharging").classList.remove('bg-danger');
+            document.getElementById("spIsCharging").classList.add('bg-success');
+            document.getElementById("spIsCharging").classList.add('rounderCorner');
+            document.getElementById("spIsCharging").innerText = 'YES';
+        } else {
+            document.getElementById("iIsCharging").classList.remove('bi-battery-charging');
+            document.getElementById("iIsCharging").classList.add('bi-battery');
+            document.getElementById("spIsCharging").classList.remove('bg-success');
+            document.getElementById("spIsCharging").classList.add('bg-danger');
+            document.getElementById("spIsCharging").classList.add('rounderCorner');
+            document.getElementById("spIsCharging").innerText = 'NO';
+        }
+
+        highlightRecommendedHour(jsonObj.chargingMode, jsonObj.info.sim_time_hour, jsonObj.chargingStatus);
+    }
+
+    var lastBatteryLevelPercentage = 20;
+
+    function showBatteryChargeLevelPercentage(value) {
+        var newWidth = Math.round(eval(value) / 46.3 * 100);
+        if (lastBatteryLevelPercentage == newWidth) return;
+        else if (lastBatteryLevelPercentage > newWidth) newWidth = lastBatteryLevelPercentage;
+        var elem = document.getElementById("batteryLevelPercentage");
+        elem.style.width = newWidth + "%";
+        elem.innerHTML = newWidth + "%";
+    }
+
+    function formatInt2digit(val) {
+        if (('' + val).length == 1) return '0' + val;
+        else return val;
+    }
+
+    var td1RecommendationByPriceLast, td2RecommendationByPriceLast, td1RecommendationByLoadLast,
+        td2RecommendationByLoadLast;
+
+    function highlightRecommendedHour(mode, hour, chargingStatus) {
+        if (td1RecommendationByPriceLast != null) {
+            td1RecommendationByPriceLast.classList.remove('table-success');
+        }
+        if (td2RecommendationByPriceLast != null) {
+            td2RecommendationByPriceLast.classList.remove('table-success');
+        }
+        if (td1RecommendationByLoadLast != null) {
+            td1RecommendationByLoadLast.classList.remove('table-success');
+        }
+        if (td2RecommendationByLoadLast != null) {
+            td2RecommendationByLoadLast.classList.remove('table-success');
+        }
+
+        var td1RecommendationByPrice = td1RecommendationByPriceLast = document.getElementById("td1RecommendationByPrice" + hour);
+        var td2RecommendationByPrice = td2RecommendationByPriceLast = document.getElementById("td2RecommendationByPrice" + hour);
+        var td1RecommendationByLoad = td1RecommendationByLoadLast = document.getElementById("td1RecommendationByLoad" + hour);
+        var td2RecommendationByLoad = td2RecommendationByLoadLast = document.getElementById("td2RecommendationByLoad" + hour);
+
+
+        if (mode == 'price' && td1RecommendationByPrice != null && chargingStatus) {
+            td1RecommendationByPrice.classList.add('table-success');
+            td2RecommendationByPrice.classList.add('table-success');
+        } else if (mode == 'load' && td1RecommendationByLoad != null && chargingStatus) {
+            td1RecommendationByLoad.classList.add('table-success');
+            td2RecommendationByLoad.classList.add('table-success');
+        }
+
+    }
+
 
 </script>
 </body>
